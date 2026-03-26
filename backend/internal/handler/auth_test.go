@@ -190,8 +190,8 @@ func TestAuthHandler_Login_AccountLocked(t *testing.T) {
 	w := postJSON(t, newRouter(uc), "/api/v1/auth/login", map[string]string{
 		"email": "u@example.com", "password": "Secure1234",
 	})
-	if w.Code != http.StatusForbidden {
-		t.Errorf("expected 403, got %d", w.Code)
+	if w.Code != 423 {
+		t.Errorf("expected 423, got %d", w.Code)
 	}
 }
 
