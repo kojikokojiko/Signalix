@@ -1,0 +1,11 @@
+# ワーカー用 Air 設定
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/worker ./cmd/worker"
+  bin = "./tmp/worker"
+  delay = 500
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "vendor"]
+  kill_delay = "2s"
