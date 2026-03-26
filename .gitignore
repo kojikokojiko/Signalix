@@ -7,6 +7,8 @@ worker/tmp/
 frontend/node_modules/
 frontend/.next/
 frontend/.env.local
+frontend/coverage/
+frontend/tsconfig.tsbuildinfo
 
 # 環境変数
 .env
