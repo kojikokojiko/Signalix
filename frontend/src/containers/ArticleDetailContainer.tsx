@@ -98,16 +98,7 @@ export function ArticleDetailContainer({ articleId }: Props) {
         </div>
       )}
 
-      {article.clean_content && (
-        <div className="prose prose-sm max-w-none mb-8">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">本文</h2>
-          <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-            {article.clean_content}
-          </div>
-        </div>
-      )}
-
-      <a
+      <
         href={article.url}
         target="_blank"
         rel="noopener noreferrer"
