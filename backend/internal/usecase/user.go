@@ -12,6 +12,9 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 var ErrTagNotFound = errors.New("tag not found")
+var ErrAlreadySubscribed = errors.New("already subscribed")
+var ErrNotSubscribed = errors.New("not subscribed")
+var ErrSourceNotFoundUser = errors.New("source not found")
 
 // ─── Input / Output types ─────────────────────────────────────────────────────
 
@@ -29,17 +32,21 @@ type SetInterestInput struct {
 // ─── Usecase ──────────────────────────────────────────────────────────────────
 
 type UserUsecase struct {
-	users     repository.UserRepository
-	interests repository.InterestRepository
-	tags      repository.TagRepository
+	users       repository.UserRepository
+	interests   repository.InterestRepository
+	tags        repository.TagRepository
+	userSources repository.UserSourceRepository
+	sources     repository.SourceRepository
 }
 
 func NewUserUsecase(
 	users repository.UserRepository,
 	interests repository.InterestRepository,
 	tags repository.TagRepository,
+	userSources repository.UserSourceRepository,
+	sources repository.SourceRepository,
 ) *UserUsecase {
-	return &UserUsecase{users: users, interests: interests, tags: tags}
+	return &UserUsecase{users: users, interests: interests, tags: tags, userSources: userSources, sources: sources}
 }
 
 func (uc *UserUsecase) GetProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
@@ -81,6 +88,44 @@ func (uc *UserUsecase) GetInterests(ctx context.Context, userID uuid.UUID) ([]do
 		return nil, fmt.Errorf("list interests: %w", err)
 	}
 	return items, nil
+}
+
+func (uc *UserUsecase) ListSources(ctx context.Context, userID uuid.UUID) ([]*domain.Source, error) {
+	return uc.userSources.List(ctx, userID)
+}
+
+func (uc *UserUsecase) SubscribeSource(ctx context.Context, userID uuid.UUID, sourceID string) (*domain.Source, error) {
+	source, err := uc.sources.FindByID(ctx, sourceID)
+	if err != nil {
+		return nil, fmt.Errorf("find source: %w", err)
+	}
+	if source == nil {
+		return nil, ErrSourceNotFoundUser
+	}
+
+	already, err := uc.userSources.IsSubscribed(ctx, userID, sourceID)
+	if err != nil {
+		return nil, fmt.Errorf("check subscription: %w", err)
+	}
+	if already {
+		return nil, ErrAlreadySubscribed
+	}
+
+	if err := uc.userSources.Subscribe(ctx, userID, sourceID); err != nil {
+		return nil, fmt.Errorf("subscribe: %w", err)
+	}
+	return source, nil
+}
+
+func (uc *UserUsecase) UnsubscribeSource(ctx context.Context, userID uuid.UUID, sourceID string) error {
+	subscribed, err := uc.userSources.IsSubscribed(ctx, userID, sourceID)
+	if err != nil {
+		return fmt.Errorf("check subscription: %w", err)
+	}
+	if !subscribed {
+		return ErrNotSubscribed
+	}
+	return uc.userSources.Unsubscribe(ctx, userID, sourceID)
 }
 
 func (uc *UserUsecase) SetInterests(ctx context.Context, userID uuid.UUID, inputs []SetInterestInput) ([]domain.InterestItem, error) {

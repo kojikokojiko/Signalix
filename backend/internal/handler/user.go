@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/kojikokojiko/signalix/internal/domain"
 	"github.com/kojikokojiko/signalix/internal/usecase"
@@ -17,6 +18,9 @@ type UserUsecaseIface interface {
 	UpdateProfile(ctx context.Context, in usecase.UpdateProfileInput) (*domain.User, error)
 	GetInterests(ctx context.Context, userID uuid.UUID) ([]domain.InterestItem, error)
 	SetInterests(ctx context.Context, userID uuid.UUID, inputs []usecase.SetInterestInput) ([]domain.InterestItem, error)
+	ListSources(ctx context.Context, userID uuid.UUID) ([]*domain.Source, error)
+	SubscribeSource(ctx context.Context, userID uuid.UUID, sourceID string) (*domain.Source, error)
+	UnsubscribeSource(ctx context.Context, userID uuid.UUID, sourceID string) error
 }
 
 type UserHandler struct {
@@ -159,6 +163,90 @@ func (h *UserHandler) SetInterests(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	respondJSON(w, http.StatusOK, map[string]any{"data": data})
+}
+
+// GET /api/v1/users/me/sources
+func (h *UserHandler) GetSources(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromCtx(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	sources, err := h.uc.ListSources(r.Context(), userID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "internal_error", "failed to list sources")
+		return
+	}
+
+	data := make([]map[string]any, len(sources))
+	for i, s := range sources {
+		data[i] = sourceToMap(s)
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"data": data})
+}
+
+// POST /api/v1/users/me/sources
+func (h *UserHandler) SubscribeSource(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromCtx(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	var body struct {
+		SourceID string `json:"source_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondError(w, http.StatusBadRequest, "bad_request", "invalid request body")
+		return
+	}
+	if body.SourceID == "" {
+		respondError(w, http.StatusBadRequest, "bad_request", "source_id is required")
+		return
+	}
+
+	source, err := h.uc.SubscribeSource(r.Context(), userID, body.SourceID)
+	if err != nil {
+		if errors.Is(err, usecase.ErrSourceNotFound) {
+			respondError(w, http.StatusNotFound, "source_not_found", "source not found")
+			return
+		}
+		if errors.Is(err, usecase.ErrAlreadySubscribed) {
+			respondError(w, http.StatusConflict, "already_subscribed", "already subscribed to this source")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "internal_error", "failed to subscribe")
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, map[string]any{"data": sourceToMap(source)})
+}
+
+// DELETE /api/v1/users/me/sources/{source_id}
+func (h *UserHandler) UnsubscribeSource(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromCtx(r)
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	sourceID := chi.URLParam(r, "source_id")
+	if sourceID == "" {
+		respondError(w, http.StatusBadRequest, "bad_request", "source_id is required")
+		return
+	}
+
+	if err := h.uc.UnsubscribeSource(r.Context(), userID, sourceID); err != nil {
+		if errors.Is(err, usecase.ErrNotSubscribed) {
+			respondError(w, http.StatusNotFound, "not_subscribed", "not subscribed to this source")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "internal_error", "failed to unsubscribe")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func userToMap(u *domain.User) map[string]any {

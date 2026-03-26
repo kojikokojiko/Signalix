@@ -83,7 +83,21 @@ export function SourceForm({ source, isSubmitting, error, onSubmit, onCancel }: 
           <Input label="名前" error={errors.name?.message} {...register('name')} />
           <Input label="Feed URL" type="url" error={errors.feed_url?.message} {...register('feed_url')} />
           <Input label="サイト URL" type="url" error={errors.site_url?.message} {...register('site_url')} />
-          <Input label="カテゴリ" error={errors.category?.message} {...register('category')} />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
+            <input
+              list="category-suggestions"
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.category ? 'border-red-400' : 'border-gray-300'}`}
+              placeholder="例: backend, ai, tech ..."
+              {...register('category')}
+            />
+            <datalist id="category-suggestions">
+              {['tech', 'ai', 'startup', 'infrastructure', 'backend', 'frontend', 'security', 'data', 'other'].map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+            {errors.category && <p className="mt-1 text-xs text-red-600">{errors.category.message}</p>}
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">言語</label>

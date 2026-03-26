@@ -166,11 +166,7 @@ func articleSummaryToMap(a *domain.ArticleWithDetails) map[string]any {
 func articleDetailToMap(a *domain.ArticleWithDetails) map[string]any {
 	m := articleSummaryToMap(a)
 	if a.Summary != nil {
-		m["summary"] = map[string]any{
-			"text":          a.Summary.SummaryText,
-			"model_name":    a.Summary.ModelName,
-			"model_version": a.Summary.ModelVersion,
-		}
+		m["summary"] = a.Summary.SummaryText
 	}
 	if a.Source != nil {
 		m["source"] = map[string]any{

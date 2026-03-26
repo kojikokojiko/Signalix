@@ -67,11 +67,12 @@ const mockItem: RecommendationItem = {
     published_at: null, language: 'en', trend_score: 0.8, status: 'processed',
     source: null, summary: null, tags: [],
   },
-  score: 0.9,
-  reason: 'Relevant to your interests',
-  score_breakdown: { relevance: 0.9, freshness: 0.8, trend: 0.7, source_quality: 0.85, personalization: 0.9 },
-  user_feedback: null,
-  is_bookmarked: false,
+  recommendation: {
+    total_score: 0.9,
+    explanation: 'Relevant to your interests',
+    score_breakdown: { relevance: 0.9, freshness: 0.8, trend: 0.7, source_quality: 0.85, personalization: 0.9 },
+    generated_at: '2025-01-01T00:00:00Z',
+  },
 };
 
 const mockPage: PaginatedResponse<RecommendationItem> = {

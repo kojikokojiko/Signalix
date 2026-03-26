@@ -23,11 +23,12 @@ const baseArticle: ArticleSummary = {
 
 const recommendation: RecommendationItem = {
   article: baseArticle,
-  score: 0.85,
-  reason: 'あなたの Go 興味に一致',
-  score_breakdown: { relevance: 0.9, freshness: 0.7, trend: 0.8, source_quality: 0.9, personalization: 0.85 },
-  user_feedback: null,
-  is_bookmarked: false,
+  recommendation: {
+    total_score: 0.85,
+    explanation: 'あなたの Go 興味に一致',
+    score_breakdown: { relevance: 0.9, freshness: 0.7, trend: 0.8, source_quality: 0.9, personalization: 0.85 },
+    generated_at: '2025-01-01T00:00:00Z',
+  },
 };
 
 // ─── ArticleCard ─────────────────────────────────────────────────────────────

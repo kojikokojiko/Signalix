@@ -35,8 +35,8 @@ export function ArticleCard({
   callbacks,
 }: ArticleCardProps) {
   const tags = article.tags.slice(0, 3);
-  const isBookmarked = recommendation?.is_bookmarked ?? false;
-  const currentFeedback = recommendation?.user_feedback ?? null;
+  const isBookmarked = false;
+  const currentFeedback = null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
@@ -94,19 +94,19 @@ export function ArticleCard({
             <div className="w-16 bg-gray-100 rounded-full h-1.5">
               <div
                 className="bg-primary-500 h-1.5 rounded-full"
-                style={{ width: `${Math.min(recommendation.score * 100, 100)}%` }}
+                style={{ width: `${Math.min(recommendation.recommendation.total_score * 100, 100)}%` }}
               />
             </div>
             <span className="text-xs text-gray-500 tabular-nums">
-              {(recommendation.score * 100).toFixed(0)}
+              {(recommendation.recommendation.total_score * 100).toFixed(0)}
             </span>
           </div>
         )}
       </div>
 
       {/* Recommendation reason */}
-      {recommendation?.reason && (
-        <p className="text-xs text-gray-400 mb-3">💡 {recommendation.reason}</p>
+      {recommendation?.recommendation.explanation && (
+        <p className="text-xs text-gray-400 mb-3">💡 {recommendation.recommendation.explanation}</p>
       )}
 
       {/* Action bar */}

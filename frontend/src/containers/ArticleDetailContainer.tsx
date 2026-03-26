@@ -51,7 +51,9 @@ export function ArticleDetailContainer({ articleId }: Props) {
       {article.summary && (
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
           <p className="text-xs font-medium text-blue-700 mb-2">✨ AI 要約</p>
-          <p className="text-sm text-gray-700 leading-relaxed">{article.summary}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {typeof article.summary === 'string' ? article.summary : (article.summary as unknown as { text: string })?.text}
+          </p>
           <p className="text-xs text-gray-400 mt-2">要約は gpt-4o-mini で生成されました</p>
         </div>
       )}

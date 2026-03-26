@@ -33,10 +33,12 @@ func (r *RecommendationRepository) List(ctx context.Context, userID uuid.UUID, l
 			s.id, s.name, s.site_url, s.quality_score,
 			rl.id, rl.total_score, rl.relevance_score, rl.freshness_score, rl.trend_score, rl.source_quality_score, rl.personalization_boost,
 			rl.explanation, rl.generated_at, rl.expires_at,
+			asu.summary_text,
 			COUNT(*) OVER() AS total_count
 		FROM recommendation_logs rl
 		JOIN articles a ON a.id = rl.article_id
 		JOIN sources s ON s.id = a.source_id
+		LEFT JOIN article_summaries asu ON asu.article_id = a.id
 		WHERE rl.user_id = $1
 		  AND rl.expires_at > NOW()
 		` + langFilter + `
@@ -57,6 +59,7 @@ func (r *RecommendationRepository) List(ctx context.Context, userID uuid.UUID, l
 			Source: &domain.Source{},
 		}
 		log := &domain.RecommendationLog{UserID: userID}
+		var sumText *string
 
 		if err := rows.Scan(
 			&article.Article.ID, &article.Article.SourceID, &article.Article.URL, &article.Article.Title,
@@ -65,9 +68,13 @@ func (r *RecommendationRepository) List(ctx context.Context, userID uuid.UUID, l
 			&article.Source.ID, &article.Source.Name, &article.Source.SiteURL, &article.Source.QualityScore,
 			&log.ID, &log.TotalScore, &log.RelevanceScore, &log.FreshnessScore, &log.TrendScore,
 			&log.SourceQualityScore, &log.PersonalizationBoost, &log.Explanation, &log.GeneratedAt, &log.ExpiresAt,
+			&sumText,
 			&total,
 		); err != nil {
 			return nil, 0, err
+		}
+		if sumText != nil {
+			article.Summary = &domain.ArticleSummary{SummaryText: *sumText}
 		}
 		log.ArticleID = article.Article.ID
 		items = append(items, &domain.RecommendedItem{Article: article, Log: log})
@@ -75,6 +82,16 @@ func (r *RecommendationRepository) List(ctx context.Context, userID uuid.UUID, l
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
 	}
+
+	// タグをロード
+	for _, item := range items {
+		tags, err := r.loadTagsForArticle(ctx, item.Article.Article.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		item.Article.Tags = tags
+	}
+
 	return items, total, nil
 }
 

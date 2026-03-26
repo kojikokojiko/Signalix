@@ -25,7 +25,7 @@ export function useCreateSource() {
   return useMutation({
     mutationFn: (data: Partial<Source>) => apiClient.admin.createSource(data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.admin.sources() });
+      qc.invalidateQueries({ queryKey: ['admin', 'sources'] });
     },
   });
 }
@@ -36,7 +36,7 @@ export function useUpdateSource() {
     mutationFn: ({ id, data }: { id: string; data: Partial<Source> }) =>
       apiClient.admin.updateSource(id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.admin.sources() });
+      qc.invalidateQueries({ queryKey: ['admin', 'sources'] });
     },
   });
 }
@@ -46,7 +46,7 @@ export function useDeleteSource() {
   return useMutation({
     mutationFn: (id: string) => apiClient.admin.deleteSource(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.admin.sources() });
+      qc.invalidateQueries({ queryKey: ['admin', 'sources'] });
     },
   });
 }

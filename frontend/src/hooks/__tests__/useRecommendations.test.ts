@@ -32,13 +32,14 @@ const mockRecommendation: RecommendationItem = {
     published_at: null, language: 'en', trend_score: 0.9, status: 'processed',
     source: null, summary: 'Summary here', tags: [],
   },
-  score: 0.88,
-  reason: 'Matches your interests',
-  score_breakdown: {
-    relevance: 0.9, freshness: 0.8, trend: 0.9, source_quality: 0.85, personalization: 0.88,
+  recommendation: {
+    total_score: 0.88,
+    explanation: 'Matches your interests',
+    score_breakdown: {
+      relevance: 0.9, freshness: 0.8, trend: 0.9, source_quality: 0.85, personalization: 0.88,
+    },
+    generated_at: '2025-01-01T00:00:00Z',
   },
-  user_feedback: null,
-  is_bookmarked: false,
 };
 
 const mockPage1: PaginatedResponse<RecommendationItem> = {
@@ -47,7 +48,7 @@ const mockPage1: PaginatedResponse<RecommendationItem> = {
 };
 
 const mockPage2: PaginatedResponse<RecommendationItem> = {
-  data: [{ ...mockRecommendation, score: 0.75 }],
+  data: [{ ...mockRecommendation, recommendation: { ...mockRecommendation.recommendation, total_score: 0.75 } }],
   pagination: { page: 2, per_page: 20, total: 2, total_pages: 2, has_next: false, has_prev: true },
 };
 
@@ -64,7 +65,7 @@ describe('useRecommendations', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mockGetFeed).toHaveBeenCalledWith({ page: 1 });
-    expect(result.current.data?.pages[0].data[0].score).toBe(0.88);
+    expect(result.current.data?.pages[0].data[0].recommendation.total_score).toBe(0.88);
   });
 
   it('enabled=false のとき API を呼ばない', () => {

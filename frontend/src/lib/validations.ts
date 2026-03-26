@@ -29,8 +29,8 @@ export const updateUserSchema = z.object({
 
 export const sourceSchema = z.object({
   name: z.string().min(1, '名前を入力してください'),
-  feed_url: z.url('有効なURLを入力してください'),
-  site_url: z.url('有効なURLを入力してください'),
+  feed_url: z.string().url('有効なURLを入力してください'),
+  site_url: z.string().url('有効なURLを入力してください'),
   category: z.string().min(1, 'カテゴリを入力してください'),
   language: z.enum(['ja', 'en']),
   description: z.string().nullable().optional(),

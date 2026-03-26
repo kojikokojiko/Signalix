@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserInterests, useUpdateUser, useUpdateInterests } from '@/hooks/useUserSettings';
+import { useUserSources, useUnsubscribeSource } from '@/hooks/useUserSources';
 import { updateUserSchema, UpdateUserFormValues } from '@/lib/validations';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -28,8 +29,10 @@ export function SettingsContainer() {
   }, [status, router]);
 
   const { data: interestsData } = useUserInterests(status === 'authenticated');
+  const { data: sourcesData } = useUserSources(status === 'authenticated');
   const updateUser = useUpdateUser();
   const updateInterests = useUpdateInterests();
+  const unsubscribeSource = useUnsubscribeSource();
 
   const {
     register,
@@ -69,6 +72,7 @@ export function SettingsContainer() {
 
   const interests = interestsData?.data ?? [];
   const existingTagNames = new Set(interests.map((i) => i.tag_name));
+  const subscribedSources = sourcesData?.data ?? [];
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-6">
@@ -162,6 +166,43 @@ export function SettingsContainer() {
                 >
                   ✕
                 </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+      {/* Subscribed sources */}
+      <section className="bg-white rounded-2xl border border-gray-200 p-6 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">購読中ソース</h2>
+          <a
+            href="/sources"
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          >
+            ソースを探す
+          </a>
+        </div>
+
+        {subscribedSources.length === 0 ? (
+          <p className="text-sm text-gray-500">購読しているソースはありません</p>
+        ) : (
+          <div className="space-y-3">
+            {subscribedSources.map((source) => (
+              <div key={source.id} className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-gray-900 font-medium truncate">{source.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {source.category} · {source.language.toUpperCase()}
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => unsubscribeSource.mutate(source.id)}
+                  loading={unsubscribeSource.isPending}
+                >
+                  解除
+                </Button>
               </div>
             ))}
           </div>

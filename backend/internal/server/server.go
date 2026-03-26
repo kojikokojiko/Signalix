@@ -64,6 +64,7 @@ func New(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, logger *zap.Lo
 	feedCache := redisrepo.NewFeedCache(rdb)
 
 	tagRepo := postgres.NewTagRepository(db)
+	userSourceRepo := postgres.NewUserSourceRepository(db)
 
 	sourceUC := usecase.NewSourceUsecase(sourceRepo)
 	articleUC := usecase.NewArticleUsecase(articleRepo, nil)
@@ -71,7 +72,7 @@ func New(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, logger *zap.Lo
 	feedbackUC := usecase.NewFeedbackUsecase(feedbackRepo, articleRepo, interestRepo)
 	recommendationUC := usecase.NewRecommendationUsecase(recommendationRepo, interestRepo, rateLimitStore, streamPublisher)
 	adminUC := usecase.NewAdminUsecase(sourceRepo, ingestionJobStore, adminStatsStore, streamPublisher)
-	userUC := usecase.NewUserUsecase(userRepo, interestRepo, tagRepo)
+	userUC := usecase.NewUserUsecase(userRepo, interestRepo, tagRepo, userSourceRepo, sourceRepo)
 
 	sourceHandler := handler.NewSourceHandler(sourceUC)
 	articleHandler := handler.NewArticleHandler(articleUC)
@@ -109,6 +110,9 @@ func New(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, logger *zap.Lo
 			r.Patch("/users/me", userHandler.UpdateMe)
 			r.Get("/users/me/interests", userHandler.GetInterests)
 			r.Put("/users/me/interests", userHandler.SetInterests)
+			r.Get("/users/me/sources", userHandler.GetSources)
+			r.Post("/users/me/sources", userHandler.SubscribeSource)
+			r.Delete("/users/me/sources/{source_id}", userHandler.UnsubscribeSource)
 
 			// ブックマーク
 			r.Get("/bookmarks", bookmarkHandler.List)

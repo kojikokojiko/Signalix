@@ -82,3 +82,34 @@
 ```
 
 `recent_articles` は最新 5 件を返す。
+
+---
+
+## ユーザー購読エンドポイント
+
+| メソッド | パス | 認証必須 | 説明 |
+|---------|------|---------|------|
+| GET | `/api/v1/users/me/sources` | 必要 | 購読中ソース一覧 |
+| POST | `/api/v1/users/me/sources` | 必要 | ソースを購読 |
+| DELETE | `/api/v1/users/me/sources/:source_id` | 必要 | 購読解除 |
+
+### POST /api/v1/users/me/sources
+
+リクエストボディ:
+```json
+{ "source_id": "uuid" }
+```
+
+レスポンス: 201 Created（購読したソースオブジェクト）
+
+### DELETE /api/v1/users/me/sources/:source_id
+
+レスポンス: 204 No Content
+
+### エラー
+
+| 条件 | ステータス | コード |
+|------|---------|------|
+| 存在しない source_id | 404 | `source_not_found` |
+| 既に購読済み | 409 | `already_subscribed` |
+| 購読していない | 404 | `not_subscribed` |

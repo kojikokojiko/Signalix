@@ -45,11 +45,6 @@ type CreateSourceInput struct {
 	QualityScore         float64
 }
 
-var validCategories = map[string]bool{
-	"tech": true, "ai": true, "startup": true, "infrastructure": true,
-	"backend": true, "frontend": true, "security": true, "data": true, "other": true,
-}
-
 func (uc *AdminUsecase) CreateSource(ctx context.Context, in CreateSourceInput) (*domain.Source, error) {
 	if in.Name == "" || len(in.Name) > 100 {
 		return nil, fmt.Errorf("%w: name must be 1-100 characters", ErrValidation)
@@ -60,8 +55,8 @@ func (uc *AdminUsecase) CreateSource(ctx context.Context, in CreateSourceInput) 
 	if in.SiteURL == "" {
 		return nil, fmt.Errorf("%w: site_url is required", ErrValidation)
 	}
-	if !validCategories[in.Category] {
-		return nil, fmt.Errorf("%w: invalid category", ErrValidation)
+	if in.Category == "" {
+		return nil, fmt.Errorf("%w: category is required", ErrValidation)
 	}
 	if in.Language == "" {
 		return nil, fmt.Errorf("%w: language is required", ErrValidation)
@@ -113,8 +108,8 @@ type UpdateSourceInput struct {
 }
 
 func (uc *AdminUsecase) UpdateSource(ctx context.Context, id string, in UpdateSourceInput) (*domain.Source, error) {
-	if in.Category != nil && !validCategories[*in.Category] {
-		return nil, fmt.Errorf("%w: invalid category", ErrValidation)
+	if in.Category != nil && *in.Category == "" {
+		return nil, fmt.Errorf("%w: category is required", ErrValidation)
 	}
 	if in.FetchIntervalMinutes != nil && (*in.FetchIntervalMinutes < 15 || *in.FetchIntervalMinutes > 1440) {
 		return nil, fmt.Errorf("%w: fetch_interval_minutes must be 15-1440", ErrValidation)

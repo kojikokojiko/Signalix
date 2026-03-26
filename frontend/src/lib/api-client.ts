@@ -25,6 +25,13 @@ import type {
   Source,
 } from '@/types/api';
 
+interface SourceListParams {
+  category?: string;
+  language?: string;
+  page?: number;
+  per_page?: number;
+}
+
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
@@ -162,6 +169,18 @@ export const apiClient = {
     interests: () => get<ApiResponse<UserInterest[]>>('/users/me/interests'),
     updateInterests: (data: UpdateInterestsInput) =>
       put_<ApiResponse<UserInterest[]>>('/users/me/interests', data),
+    listSources: () => get<ApiResponse<Source[]>>('/users/me/sources'),
+    subscribeSource: (sourceId: string) =>
+      post<ApiResponse<Source>>('/users/me/sources', { source_id: sourceId }),
+    unsubscribeSource: (sourceId: string) =>
+      del<void>(`/users/me/sources/${sourceId}`),
+  },
+
+  sources: {
+    list: (params?: SourceListParams) =>
+      get<PaginatedResponse<Source>>('/sources', params as Record<string, unknown>),
+    getById: (id: string) =>
+      get<ApiResponse<{ source: Source }>>(`/sources/${id}`),
   },
 
   admin: {

@@ -30,6 +30,9 @@ export function Navbar({ user, isLoading = false, onLogout }: NavbarProps) {
               For You
             </Link>
           )}
+          <Link href="/sources" className="hidden sm:block text-sm text-gray-600 hover:text-gray-900">
+            ソース
+          </Link>
         </div>
 
         <div className="flex items-center gap-3">

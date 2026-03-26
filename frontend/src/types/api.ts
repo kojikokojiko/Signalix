@@ -84,6 +84,10 @@ export interface Source {
   last_fetched_at: string | null;
 }
 
+export interface UserSource extends Source {
+  subscribed_at: string;
+}
+
 export interface ArticleSummary {
   id: string;
   title: string;
@@ -105,17 +109,18 @@ export interface ArticleDetail extends ArticleSummary {
 
 export interface RecommendationItem {
   article: ArticleSummary;
-  score: number;
-  reason: string;
-  score_breakdown: {
-    relevance: number;
-    freshness: number;
-    trend: number;
-    source_quality: number;
-    personalization: number;
+  recommendation: {
+    total_score: number;
+    explanation: string;
+    score_breakdown: {
+      relevance: number;
+      freshness: number;
+      trend: number;
+      source_quality: number;
+      personalization: number;
+    };
+    generated_at: string;
   };
-  user_feedback: 'like' | 'dislike' | null;
-  is_bookmarked: boolean;
 }
 
 // ─── Bookmark ────────────────────────────────────────────────────────────────
