@@ -98,7 +98,7 @@ export function ArticleDetailContainer({ articleId }: Props) {
         </div>
       )}
 
-      <
+      <a
         href={article.url}
         target="_blank"
         rel="noopener noreferrer"
