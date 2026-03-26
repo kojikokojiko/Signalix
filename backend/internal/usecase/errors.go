@@ -19,4 +19,5 @@ var (
 	ErrSourceNotFound      = errors.New("source not found")
 	ErrFeedURLAlreadyExists = errors.New("feed_url already exists")
 	ErrIngestionJobNotFound = errors.New("ingestion job not found")
+	ErrChatNotAvailable     = errors.New("chat feature not available")
 )

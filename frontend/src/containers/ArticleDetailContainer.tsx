@@ -6,6 +6,7 @@ import { useSubmitFeedback } from '@/hooks/useFeedback';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { ArticleChat } from '@/components/ArticleChat';
 
 interface Props {
   articleId: string;
@@ -105,6 +106,8 @@ export function ArticleDetailContainer({ articleId }: Props) {
       >
         元記事を読む ↗
       </a>
+
+      {user && <ArticleChat articleId={articleId} />}
     </main>
   );
 }

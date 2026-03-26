@@ -23,6 +23,8 @@ import type {
   AdminStats,
   IngestionJob,
   Source,
+  ChatMessage,
+  ChatResponse,
 } from '@/types/api';
 
 interface SourceListParams {
@@ -145,6 +147,8 @@ export const apiClient = {
       get<ApiResponse<ArticleDetail>>(`/articles/${id}`),
     trending: (params: TrendingParams) =>
       get<PaginatedResponse<ArticleSummary>>('/articles/trending', params as Record<string, unknown>),
+    chat: (id: string, message: string, history: ChatMessage[]) =>
+      post<ChatResponse>(`/articles/${id}/chat`, { message, history }),
   },
 
   bookmarks: {

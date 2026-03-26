@@ -2,7 +2,10 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -15,6 +18,7 @@ type ArticleUsecaseIface interface {
 	List(ctx context.Context, in usecase.ArticleListInput) (*usecase.ArticleListResult, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.ArticleWithDetails, error)
 	Trending(ctx context.Context, in usecase.TrendingInput) (*usecase.TrendingResult, error)
+	ChatAboutArticle(ctx context.Context, in usecase.ChatInput) (*usecase.ChatOutput, error)
 }
 
 type ArticleHandler struct {
@@ -131,6 +135,58 @@ func (h *ArticleHandler) Trending(w http.ResponseWriter, r *http.Request) {
 		"meta": map[string]any{
 			"period":       result.Period,
 			"generated_at": result.GeneratedAt.Format(time.RFC3339),
+		},
+	})
+}
+
+func (h *ArticleHandler) Chat(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "validation_error", "invalid article id")
+		return
+	}
+
+	var body struct {
+		Message string                `json:"message"`
+		History []usecase.ChatMessage `json:"history"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondError(w, http.StatusBadRequest, "validation_error", "invalid request body")
+		return
+	}
+	if strings.TrimSpace(body.Message) == "" {
+		respondError(w, http.StatusBadRequest, "validation_error", "message is required")
+		return
+	}
+
+	// 直近10ターンに制限してトークン過多を防ぐ
+	history := body.History
+	if len(history) > 10 {
+		history = history[len(history)-10:]
+	}
+
+	out, err := h.uc.ChatAboutArticle(r.Context(), usecase.ChatInput{
+		ArticleID: id,
+		History:   history,
+		Message:   body.Message,
+	})
+	if err != nil {
+		if errors.Is(err, usecase.ErrArticleNotFound) {
+			respondError(w, http.StatusNotFound, "article_not_found", "article not found")
+			return
+		}
+		if errors.Is(err, usecase.ErrChatNotAvailable) {
+			respondError(w, http.StatusServiceUnavailable, "chat_unavailable", "chat feature is not available")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "internal_error", "failed to generate response")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]any{
+			"reply": out.Reply,
 		},
 	})
 }
