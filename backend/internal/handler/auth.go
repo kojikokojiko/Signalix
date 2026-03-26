@@ -96,7 +96,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, usecase.ErrInvalidCredentials):
 			respondError(w, http.StatusUnauthorized, "invalid_credentials", "invalid email or password")
 		case errors.Is(err, usecase.ErrAccountLocked):
-			respondError(w, http.StatusForbidden, "account_locked", "account is temporarily locked")
+			respondError(w, 423, "account_locked", "account is temporarily locked")
 		case errors.Is(err, usecase.ErrAccountDisabled):
 			respondError(w, http.StatusForbidden, "account_disabled", "account is disabled")
 		default:
