@@ -232,6 +232,7 @@ func articleDetailToMap(a *domain.ArticleWithDetails) map[string]any {
 			"category": a.Source.Category,
 		}
 	}
+	m["clean_content"] = a.Article.CleanContent
 	m["created_at"] = a.Article.CreatedAt
 	return m
 }
