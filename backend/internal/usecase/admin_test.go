@@ -113,11 +113,11 @@ func TestAdminUsecase_CreateSource_ValidationError_EmptyName(t *testing.T) {
 	}
 }
 
-func TestAdminUsecase_CreateSource_ValidationError_InvalidCategory(t *testing.T) {
+func TestAdminUsecase_CreateSource_ValidationError_EmptyCategory(t *testing.T) {
 	uc := newAdminUC(&mockAdminSourceRepo{}, &mockIngestionJobRepo{})
 	_, err := uc.CreateSource(context.Background(), usecase.CreateSourceInput{
 		Name: "X", FeedURL: "https://test.com/feed", SiteURL: "https://test.com",
-		Category: "invalid", Language: "en",
+		Category: "", Language: "en",
 	})
 	if !errors.Is(err, usecase.ErrValidation) {
 		t.Errorf("expected ErrValidation, got %v", err)

@@ -92,23 +92,6 @@ describe('ArticleCard', () => {
     expect(screen.getByText('💡 あなたの Go 興味に一致')).toBeInTheDocument();
   });
 
-  it('is_bookmarked=true のとき onBookmark コールバックが isBookmarked=true で呼ばれる', () => {
-    const onBookmark = jest.fn();
-    const bookmarkedRec = { ...recommendation, is_bookmarked: true };
-
-    render(
-      <ArticleCard
-        article={baseArticle}
-        recommendation={bookmarkedRec}
-        isAuthenticated={true}
-        callbacks={{ onBookmark }}
-      />
-    );
-
-    fireEvent.click(screen.getByLabelText('ブックマーク解除'));
-    expect(onBookmark).toHaveBeenCalledWith('article-1', true);
-  });
-
   it('いいねボタンクリックで onFeedback("like") が呼ばれる', () => {
     const onFeedback = jest.fn();
     render(

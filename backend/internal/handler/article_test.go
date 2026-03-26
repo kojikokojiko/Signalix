@@ -19,6 +19,7 @@ type mockArticleUC struct {
 	listFn     func(ctx context.Context, in usecase.ArticleListInput) (*usecase.ArticleListResult, error)
 	getByIDFn  func(ctx context.Context, id uuid.UUID) (*domain.ArticleWithDetails, error)
 	trendingFn func(ctx context.Context, in usecase.TrendingInput) (*usecase.TrendingResult, error)
+	chatFn     func(ctx context.Context, in usecase.ChatInput) (*usecase.ChatOutput, error)
 }
 
 func (m *mockArticleUC) List(ctx context.Context, in usecase.ArticleListInput) (*usecase.ArticleListResult, error) {
@@ -29,6 +30,12 @@ func (m *mockArticleUC) GetByID(ctx context.Context, id uuid.UUID) (*domain.Arti
 }
 func (m *mockArticleUC) Trending(ctx context.Context, in usecase.TrendingInput) (*usecase.TrendingResult, error) {
 	return m.trendingFn(ctx, in)
+}
+func (m *mockArticleUC) ChatAboutArticle(ctx context.Context, in usecase.ChatInput) (*usecase.ChatOutput, error) {
+	if m.chatFn != nil {
+		return m.chatFn(ctx, in)
+	}
+	return &usecase.ChatOutput{Reply: "test reply"}, nil
 }
 
 func newArticleRouter(uc handler.ArticleUsecaseIface) http.Handler {

@@ -115,7 +115,7 @@ func newArticles(n int) []*domain.ArticleWithDetails {
 
 func TestArticleUsecase_List_ReturnsPaginatedResults(t *testing.T) {
 	repo := &mockArticleRepo{articles: newArticles(5)}
-	uc := usecase.NewArticleUsecase(repo, nil)
+	uc := usecase.NewArticleUsecase(repo, nil, nil)
 
 	result, err := uc.List(context.Background(), usecase.ArticleListInput{Page: 1, PerPage: 20})
 	if err != nil {
@@ -131,7 +131,7 @@ func TestArticleUsecase_List_ReturnsPaginatedResults(t *testing.T) {
 
 func TestArticleUsecase_List_SecondPage(t *testing.T) {
 	repo := &mockArticleRepo{articles: newArticles(25)}
-	uc := usecase.NewArticleUsecase(repo, nil)
+	uc := usecase.NewArticleUsecase(repo, nil, nil)
 
 	result, _ := uc.List(context.Background(), usecase.ArticleListInput{Page: 2, PerPage: 20})
 	if len(result.Articles) != 5 {
@@ -148,7 +148,7 @@ func TestArticleUsecase_List_SecondPage(t *testing.T) {
 func TestArticleUsecase_GetByID_Found(t *testing.T) {
 	articles := newArticles(3)
 	repo := &mockArticleRepo{articles: articles}
-	uc := usecase.NewArticleUsecase(repo, nil)
+	uc := usecase.NewArticleUsecase(repo, nil, nil)
 
 	a, err := uc.GetByID(context.Background(), articles[1].Article.ID)
 	if err != nil {
@@ -164,7 +164,7 @@ func TestArticleUsecase_GetByID_Found(t *testing.T) {
 
 func TestArticleUsecase_GetByID_NotFound(t *testing.T) {
 	repo := &mockArticleRepo{}
-	uc := usecase.NewArticleUsecase(repo, nil)
+	uc := usecase.NewArticleUsecase(repo, nil, nil)
 
 	a, err := uc.GetByID(context.Background(), uuid.New())
 	if err != nil {
@@ -177,7 +177,7 @@ func TestArticleUsecase_GetByID_NotFound(t *testing.T) {
 
 func TestArticleUsecase_Trending_DefaultPeriod(t *testing.T) {
 	repo := &mockArticleRepo{articles: newArticles(5)}
-	uc := usecase.NewArticleUsecase(repo, nil)
+	uc := usecase.NewArticleUsecase(repo, nil, nil)
 
 	result, err := uc.Trending(context.Background(), usecase.TrendingInput{Period: "", Page: 1, PerPage: 20})
 	if err != nil {
@@ -193,7 +193,7 @@ func TestArticleUsecase_Trending_DefaultPeriod(t *testing.T) {
 
 func TestArticleUsecase_Trending_7dPeriod(t *testing.T) {
 	repo := &mockArticleRepo{articles: newArticles(3)}
-	uc := usecase.NewArticleUsecase(repo, nil)
+	uc := usecase.NewArticleUsecase(repo, nil, nil)
 
 	result, _ := uc.Trending(context.Background(), usecase.TrendingInput{Period: "7d", Page: 1, PerPage: 20})
 	if result.Period != "7d" {
@@ -203,7 +203,7 @@ func TestArticleUsecase_Trending_7dPeriod(t *testing.T) {
 
 func TestArticleUsecase_List_PerPageCappedAt100(t *testing.T) {
 	repo := &mockArticleRepo{articles: newArticles(10)}
-	uc := usecase.NewArticleUsecase(repo, nil)
+	uc := usecase.NewArticleUsecase(repo, nil, nil)
 
 	result, _ := uc.List(context.Background(), usecase.ArticleListInput{Page: 1, PerPage: 200})
 	// per_page is capped — the mock returns up to 100 items or all, total should still be 10
