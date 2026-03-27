@@ -68,10 +68,11 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="display_name" className="block text-sm font-medium text-gray-700 mb-1">
                 表示名
               </label>
               <input
+                id="display_name"
                 type="text"
                 placeholder="例: 山田太郎"
                 autoComplete="name"
@@ -84,10 +85,11 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 メールアドレス
               </label>
               <input
+                id="email"
                 type="email"
                 autoComplete="email"
                 {...register('email')}
@@ -99,10 +101,11 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 パスワード
               </label>
               <input
+                id="password"
                 type="password"
                 autoComplete="new-password"
                 {...register('password', {
