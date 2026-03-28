@@ -17,7 +17,14 @@ const (
 	maxEmbedChars   = 8000
 	maxSummaryChars = 4000
 	maxTagChars     = 2000
+	maxChatChars    = 6000
 )
+
+// ChatMessage represents a single turn in a conversation.
+type ChatMessage struct {
+	Role    string `json:"role"`    // "user" or "assistant"
+	Content string `json:"content"`
+}
 
 // ExtractedTag holds a tag name and confidence score returned by the AI.
 type ExtractedTag struct {
@@ -141,6 +148,48 @@ func (c *Client) CreateTags(ctx context.Context, title, cleanContent string, all
 	return tags, tokensUsed, err
 }
 
+// CreateChat generates a reply to a user's question about a specific article.
+func (c *Client) CreateChat(ctx context.Context, articleTitle, articleContent string, history []ChatMessage, userMessage string) (string, error) {
+	content := articleContent
+	if len(content) > maxChatChars {
+		content = content[:maxChatChars]
+	}
+
+	systemPrompt := fmt.Sprintf(chatSystemPromptTpl, articleTitle, content)
+
+	messages := []openai.ChatCompletionMessageParamUnion{
+		openai.SystemMessage(systemPrompt),
+	}
+	for _, m := range history {
+		switch m.Role {
+		case "user":
+			messages = append(messages, openai.UserMessage(m.Content))
+		case "assistant":
+			messages = append(messages, openai.AssistantMessage(m.Content))
+		}
+	}
+	messages = append(messages, openai.UserMessage(userMessage))
+
+	var reply string
+	err := retryWithBackoff(ctx, func() error {
+		resp, err := c.oai.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+			Model:       openai.ChatModelGPT4oMini,
+			Messages:    messages,
+			Temperature: openai.Float(0.7),
+			MaxTokens:   openai.Int(800),
+		})
+		if err != nil {
+			return classifyError(err)
+		}
+		if len(resp.Choices) == 0 {
+			return retryable(fmt.Errorf("empty completion response"))
+		}
+		reply = strings.TrimSpace(resp.Choices[0].Message.Content)
+		return nil
+	})
+	return reply, err
+}
+
 // --- retry ---
 
 type permanentError struct{ err error }
@@ -217,6 +266,21 @@ func parseTagResponse(raw string, allowedTags []string) ([]ExtractedTag, error) 
 }
 
 // --- prompts ---
+
+const chatSystemPromptTpl = `あなたは技術記事専門のAIアシスタントです。以下の記事の内容をもとに、ユーザーの質問に日本語で丁寧に回答してください。
+
+ルール:
+- 記事の内容に基づいて回答する
+- 記事に明記されていない情報は「記事には記載がありませんが、一般的には〜」と前置きして補足する
+- 簡潔かつわかりやすく回答する
+- コードの例が必要な場合はコードブロックを使う
+
+---
+記事タイトル: %s
+
+記事本文:
+%s
+---`
 
 const summarySystemPrompt = `あなたは技術記事の要約専門家です。
 以下のルールに厳格に従って要約を作成してください:

@@ -28,19 +28,32 @@ const articleSelectCols = `
 	asu.summary_text, asu.model_name, asu.model_version`
 
 func scanArticleRow(rows pgx.Rows) (*domain.ArticleWithDetails, error) {
+	return scanArticleRowWithOpts(rows, false)
+}
+
+func scanArticleRowWithContent(rows pgx.Rows) (*domain.ArticleWithDetails, error) {
+	return scanArticleRowWithOpts(rows, true)
+}
+
+func scanArticleRowWithOpts(rows pgx.Rows, withContent bool) (*domain.ArticleWithDetails, error) {
 	a := &domain.ArticleWithDetails{
 		Source: &domain.Source{},
 	}
 	var sumText, sumModel, sumVersion *string
 
-	if err := rows.Scan(
+	dest := []any{
 		&a.Article.ID, &a.Article.SourceID, &a.Article.URL, &a.Article.URLHash,
 		&a.Article.Title, &a.Article.Author, &a.Article.Language,
 		&a.Article.PublishedAt, &a.Article.TrendScore, &a.Article.Status,
 		&a.Article.CreatedAt, &a.Article.UpdatedAt,
 		&a.Source.ID, &a.Source.Name, &a.Source.SiteURL, &a.Source.Category,
 		&sumText, &sumModel, &sumVersion,
-	); err != nil {
+	}
+	if withContent {
+		dest = append(dest, &a.Article.CleanContent)
+	}
+
+	if err := rows.Scan(dest...); err != nil {
 		return nil, err
 	}
 
@@ -132,7 +145,7 @@ func (r *ArticleRepository) List(ctx context.Context, f repository.ArticleFilter
 
 func (r *ArticleRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.ArticleWithDetails, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT `+articleSelectCols+`
+		SELECT `+articleSelectCols+`, a.clean_content
 		FROM articles a
 		JOIN sources s ON s.id = a.source_id
 		LEFT JOIN article_summaries asu ON asu.article_id = a.id
@@ -146,7 +159,7 @@ func (r *ArticleRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain
 	if !rows.Next() {
 		return nil, nil
 	}
-	a, err := scanArticleRow(rows)
+	a, err := scanArticleRowWithContent(rows)
 	if err != nil {
 		return nil, err
 	}

@@ -7,6 +7,7 @@
 | GET | `/api/v1/articles` | 任意 | 記事一覧取得（検索・フィルタ対応） |
 | GET | `/api/v1/articles/:id` | 任意 | 記事詳細取得 |
 | GET | `/api/v1/articles/trending` | 不要 | トレンド記事一覧取得 |
+| POST | `/api/v1/articles/:id/chat` | 必須 | 記事についてAIにチャットで質問する |
 
 ---
 
@@ -169,3 +170,50 @@
 ```
 
 **キャッシュ:** トレンドフィードは Redis にキャッシュ（TTL: 10 分）。
+
+---
+
+## POST /api/v1/articles/:id/chat
+
+記事の内容について AI にチャットで質問する。記事の本文をコンテキストとして渡し、GPT-4o-mini が回答を生成する。会話履歴はクライアント側で保持し、リクエストに含める。
+
+### 認証
+
+Bearer トークンによる認証必須。
+
+### リクエストボディ
+
+```json
+{
+  "message": "この記事のポイントを教えてください",
+  "history": [
+    { "role": "user", "content": "前のメッセージ" },
+    { "role": "assistant", "content": "前の返答" }
+  ]
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `message` | string | ○ | ユーザーのメッセージ |
+| `history` | array | - | 会話履歴（最大直近10ターン）。省略可。 |
+| `history[].role` | string | ○ | `"user"` または `"assistant"` |
+| `history[].content` | string | ○ | メッセージ内容 |
+
+### レスポンス: 200 OK
+
+```json
+{
+  "data": {
+    "reply": "この記事では Go 1.23 のジェネリクス改善について..."
+  }
+}
+```
+
+### エラー
+
+| 条件 | ステータス | コード |
+|------|---------|------|
+| 記事が存在しない | 404 | `article_not_found` |
+| OpenAI API キー未設定 | 503 | `chat_unavailable` |
+| message が空 | 400 | `validation_error` |

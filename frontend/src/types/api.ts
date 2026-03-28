@@ -105,6 +105,19 @@ export interface ArticleDetail extends ArticleSummary {
   clean_content: string | null;
 }
 
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatResponse {
+  data: {
+    reply: string;
+  };
+}
+
 // ─── Recommendation ───────────────────────────────────────────────────────────
 
 export interface RecommendationItem {

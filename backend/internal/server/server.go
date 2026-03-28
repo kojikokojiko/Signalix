@@ -12,6 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"github.com/kojikokojiko/signalix/internal/ai"
 	"github.com/kojikokojiko/signalix/internal/config"
 	"github.com/kojikokojiko/signalix/internal/handler"
 	authmw "github.com/kojikokojiko/signalix/internal/middleware"
@@ -19,6 +20,17 @@ import (
 	redisrepo "github.com/kojikokojiko/signalix/internal/repository/redis"
 	"github.com/kojikokojiko/signalix/internal/usecase"
 )
+
+// chatClientAdapter bridges ai.Client to usecase.ArticleChatClient.
+type chatClientAdapter struct{ c *ai.Client }
+
+func (a *chatClientAdapter) CreateChat(ctx context.Context, title, content string, history []usecase.ChatMessage, msg string) (string, error) {
+	h := make([]ai.ChatMessage, len(history))
+	for i, m := range history {
+		h[i] = ai.ChatMessage{Role: m.Role, Content: m.Content}
+	}
+	return a.c.CreateChat(ctx, title, content, h, msg)
+}
 
 type Server struct {
 	httpServer *http.Server
@@ -66,8 +78,13 @@ func New(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, logger *zap.Lo
 	tagRepo := postgres.NewTagRepository(db)
 	userSourceRepo := postgres.NewUserSourceRepository(db)
 
+	var chatClient usecase.ArticleChatClient
+	if cfg.OpenAIKey != "" {
+		chatClient = &chatClientAdapter{c: ai.NewClient(cfg.OpenAIKey)}
+	}
+
 	sourceUC := usecase.NewSourceUsecase(sourceRepo)
-	articleUC := usecase.NewArticleUsecase(articleRepo, nil)
+	articleUC := usecase.NewArticleUsecase(articleRepo, nil, chatClient)
 	bookmarkUC := usecase.NewBookmarkUsecase(bookmarkRepo, articleRepo)
 	feedbackUC := usecase.NewFeedbackUsecase(feedbackRepo, articleRepo, interestRepo)
 	recommendationUC := usecase.NewRecommendationUsecase(recommendationRepo, interestRepo, rateLimitStore, streamPublisher)
@@ -100,6 +117,9 @@ func New(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, logger *zap.Lo
 		r.Get("/articles/trending", articleHandler.Trending)
 		r.Get("/articles", articleHandler.List)
 		r.Get("/articles/{id}", articleHandler.GetByID)
+
+		// 記事チャット (認証必須)
+		r.With(authmw.Authenticate(authUC)).Post("/articles/{id}/chat", articleHandler.Chat)
 
 		// 認証必須エンドポイント
 		r.Group(func(r chi.Router) {
